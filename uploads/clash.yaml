@@ -7,6 +7,9 @@ external-controller: :9090
 dns:
   enable: true
   nameserver:
+    - "https://1.1.1.1/dns-query"
+    - "https://dns.google/dns-query"
+    - "tls://dns.rubyfish.cn:853"
     - 119.29.29.29
     - 223.5.5.5
   fallback:
@@ -68,7 +71,7 @@ proxy-groups:
   - name: ♻️ 自动选择
     type: url-test
     url: http://www.gstatic.com/generate_204
-    interval: 300
+    interval: 30
     tolerance: 50
     proxies:
       - tg频道:@freenodedaily
