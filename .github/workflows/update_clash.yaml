@@ -39,7 +39,7 @@ jobs:
             echo "❌ V2Ray 配置下载失败，跳过此文件更新"
           fi
 
-      - name: 自动修改 Clash 配置（增加 DNS + 修改 interval）
+      - name: 自动修改 Clash 配置（修改 interval）
         run: |
           # 修改 interval: 300 -> 30
           sed -i 's/interval: 300/interval: 30/' uploads/clash.yaml
