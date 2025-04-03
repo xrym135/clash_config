@@ -1,0 +1,46 @@
+name: Update Clash Config
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 每天早上 6 点（北京时间）自动运行
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v3
+
+      - name: 获取最新 Clash 配置
+        run: |
+          TODAY=$(date +"%Y%m%d")
+          LATEST_URL="https://free.datiya.com/uploads/${TODAY}-clash.yaml"
+          SAVE_PATH="uploads/clash.yaml"
+
+          echo "正在下载最新的 Clash 配置: $LATEST_URL"
+          
+          # 下载 Clash 配置，并检查 HTTP 状态码
+          HTTP_STATUS=$(curl -o "$SAVE_PATH" -L -w "%{http_code}" "$LATEST_URL")
+
+          if [[ "$HTTP_STATUS" -ne 200 ]]; then
+            echo "❌ 下载失败，HTTP 状态码: $HTTP_STATUS"
+            exit 1  # 终止 Workflow，避免提交错误文件
+          fi
+
+          echo "✅ 下载成功: $SAVE_PATH"
+
+      - name: 提交更新（仅当文件有更改）
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          if git diff --quiet uploads/clash.yaml; then
+            echo "⚠️ 配置文件无变化，跳过提交"
+            exit 0
+          fi
+
+          git add uploads/clash.yaml
+          git commit -m "更新 Clash 配置文件: $(date +'%Y-%m-%d')"
+          git push
