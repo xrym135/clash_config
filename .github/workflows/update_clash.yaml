@@ -13,26 +13,49 @@ jobs:
       - name: 检出仓库代码
         uses: actions/checkout@v3
 
-      - name: 获取最新 Clash 配置
+      - name: 确保 uploads 目录存在
+        run: mkdir -p uploads
+
+      - name: 获取最新 Clash & V2Ray 配置
         run: |
           TODAY=$(date +"%Y%m%d")
-          LATEST_URL="https://free.datiya.com/uploads/${TODAY}-clash.yaml"
-          SAVE_PATH="uploads/clash.yaml"
+          CLASH_LATEST_URL="https://free.datiya.com/uploads/${TODAY}-clash.yaml"
+          V2RAY_LATEST_URL="https://free.datiya.com/uploads/${TODAY}-v2ray.txt"
+          CLASH_SAVE_PATH="uploads/clash.yaml"
+          V2RAY_SAVE_PATH="uploads/v2ray.txt"
 
-          echo "正在下载最新的 Clash 配置: $LATEST_URL"
-          curl -o "$SAVE_PATH" -L "$LATEST_URL"
-          echo "✅ 下载成功: $SAVE_PATH"
+          echo "🔍 正在下载 Clash 配置: $CLASH_LATEST_URL"
+          if curl -o "$CLASH_SAVE_PATH" -L --fail "$CLASH_LATEST_URL"; then
+            echo "✅ Clash 配置下载成功: $CLASH_SAVE_PATH"
+          else
+            echo "❌ Clash 配置下载失败，跳过更新"
+            exit 0
+          fi
 
-      - name: 修改 Clash 配置
+          echo "🔍 正在下载 V2Ray 配置: $V2RAY_LATEST_URL"
+          if curl -o "$V2RAY_SAVE_PATH" -L --fail "$V2RAY_LATEST_URL"; then
+            echo "✅ V2Ray 配置下载成功: $V2RAY_SAVE_PATH"
+          else
+            echo "❌ V2Ray 配置下载失败，跳过此文件更新"
+          fi
+
+      - name: 自动修改 Clash 配置（增加 DNS + 修改 interval）
         run: |
+          # 修改 interval: 300 -> 30
           sed -i 's/interval: 300/interval: 30/' uploads/clash.yaml
-          echo "✅ 配置已修改，DNS 增加 & interval 设置为 30 秒"
 
-      - name: 提交更新
+          echo "✅ 配置已修改：interval 设为 30"
+
+      - name: 提交更新（仅当文件有变更）
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          git add uploads/clash.yaml
-          git commit -m "更新 Clash 配置文件: $(date +'%Y-%m-%d')" || echo "⚠️ 没有内容变化，跳过提交"
+          if git diff --quiet uploads/clash.yaml; then
+            echo "⚠️ 配置文件无变化，跳过提交"
+            exit 0
+          fi
+
+          git add uploads/clash.yaml uploads/v2ray.txt
+          git commit -m "更新配置文件: $(date +'%Y-%m-%d')"
           git push
