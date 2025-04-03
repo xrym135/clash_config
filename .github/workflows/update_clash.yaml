@@ -20,7 +20,10 @@ jobs:
           SAVE_PATH="uploads/clash.yaml"
 
           echo "正在下载最新的 Clash 配置: $LATEST_URL"
-          
+
+          # 确保 uploads 目录存在
+          mkdir -p uploads
+
           # 下载 Clash 配置，并检查 HTTP 状态码
           HTTP_STATUS=$(curl -o "$SAVE_PATH" -L -w "%{http_code}" "$LATEST_URL")
 
@@ -36,11 +39,11 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          if git diff --quiet uploads/clash.yaml; then
+          # 检查是否有改动（包括新文件）
+          if git status --porcelain | grep "uploads/clash.yaml"; then
+            git add uploads/clash.yaml
+            git commit -m "更新 Clash 配置文件: $(date +'%Y-%m-%d')"
+            git push
+          else
             echo "⚠️ 配置文件无变化，跳过提交"
-            exit 0
           fi
-
-          git add uploads/clash.yaml
-          git commit -m "更新 Clash 配置文件: $(date +'%Y-%m-%d')"
-          git push
