@@ -25,7 +25,6 @@ jobs:
 
       - name: 修改 Clash 配置
         run: |
-          sed -i '/nameserver:/a\    - "https://1.1.1.1/dns-query"\n    - "https://dns.google/dns-query"\n    - "tls://dns.rubyfish.cn:853"' uploads/clash.yaml
           sed -i 's/interval: 300/interval: 30/' uploads/clash.yaml
           echo "✅ 配置已修改，DNS 增加 & interval 设置为 30 秒"
 
